@@ -71,12 +71,13 @@ const SignOut = () => {
 }
 
 const MainPage = () =>{
+  const maxPost = 5; // used in posts, only display 5 post at a time
   const postsRef = firestore.collection('posts'); // gets collection from database called posts
   const query = postsRef.orderBy('createdAt').limit(25); //orders collection of objects by createdAt key
 
   const [posts] = useCollectionData(query, {idField: 'id'}); //listens on real-time to data with a hook and gets the collection
   const [formValue, setFormValue] = useState(''); //react's state hook that changes its value real-time
-  const dummy = useRef() //react's ref hook, so window will always have refernce in view (to auto-scroll MainPage)
+  // const dummy = useRef() //react's ref hook, so window will always have refernce in view (to auto-scroll MainPage)
 
   const filter = new Filter(); //filters out bad words
 
@@ -88,14 +89,15 @@ const MainPage = () =>{
     await postsRef.add({ //adds new post to collection on firestone
       text: filter.isProfane(formValue) ? filter.clean(formValue) : formValue,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      uid,
+      uid, //google uid of user that made post
       photoURL,
+      displayName: auth.currentUser.displayName,
       likes: 0,
       usersLiked: []
     })
     setFormValue(''); //resets MainPage input field
 
-    dummy.current.scrollIntoView({behavior: 'smooth'}); //scroll down
+    // dummy.current.scrollIntoView({behavior: 'smooth'}); //scroll down
   }
 
   return (
@@ -104,12 +106,14 @@ const MainPage = () =>{
       {/* MainPage input */}
       <form onSubmit={sendpost}>
         <input value={formValue} placeholder={`Whats on your mind, ${auth.currentUser.displayName}?`} onChange={(e) => {setFormValue(e.target.value);}}/> {/* bind hook to form input */}
-        <button type={"subnit"} disabled={!formValue}>Post</button>
+        <button type={"submit"} disabled={!formValue}>Post</button>
       </form>
       {/* MainPage */}
       <main>
-        {posts && posts.reverse().map(msg => <Post key={msg.id} post={msg}/>)}
-        <div ref={dummy}></div>
+        {posts && posts.reverse().slice(0, maxPost).map(post => <Post key={post.id} post={post}/>)}
+        {/* need a load more button */}
+
+        {/* <div ref={dummy}></div> */}
       </main>
 
       
@@ -118,10 +122,10 @@ const MainPage = () =>{
 }
 
 const Post = (props) => {
-  const {text, uid, photoURL, likes, usersLiked} = props.post;
+  const {text, uid, photoURL, displayName, likes, usersLiked} = props.post;
 
   const postClass = uid === auth.currentUser.uid ? 'posted' : 'received';
-
+  
   const deletePost = ()=>{
     if (window.confirm("Are you sure you want to delete this post?")){
       firestore.collection("posts").doc(props.post.id).delete()
@@ -130,38 +134,43 @@ const Post = (props) => {
       })
     }
   }
-
-  const likePost = ()=>{ //WORKING HERE
-    if (!usersLiked.includes(uid)){
-      usersLiked.push(uid)
-      firestore.collection("posts").doc(props.post.id).update({
-        likes: firebase.firestore.FieldValue.increment(1),
-        usersLiked: usersLiked
+  const likePost = ()=>{
+    //if user have not liked post yet
+    if (!usersLiked.includes(auth.currentUser.uid)){
+      return firestore.collection("posts").doc(props.post.id).update({
+        likes: firebase.firestore.FieldValue.increment(1), // likes: likes + 1,
+        usersLiked: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid) // usersLiked.push(auth.currentUser.uid);
+      })
+      .then (()=>{
+        console.log(`Post liked by ${auth.currentUser.displayName}`)
+      })
+      .catch((error)=>{
+        console.error("Error liking the post: ", error);
       })
     }
-    else{
-      for (const i in usersLiked){
-        if (usersLiked[i] == uid){
-          usersLiked.splice(i,1);
-          break;
-        }
-      }
-      
-      firestore.collection("posts").doc(props.post.id).update({
-        likes: firebase.firestore.FieldValue.increment(-1),
-        usersLiked: usersLiked
+    //user already liked post
+    else {
+      return firestore.collection("posts").doc(props.post.id).update({
+        likes: firebase.firestore.FieldValue.increment(-1), // likes: likes - 1,
+        usersLiked: firebase.firestore.FieldValue.arrayRemove(auth.currentUser.uid)
+      })
+      .then (()=>{
+        console.log(`Post unliked by ${auth.currentUser.displayName}`)
+      })
+      .catch((error)=>{
+        console.error("Error liking the post: ", error);
       })
     }
-    
   }
 
   return (
     // different style depending on sent or received className
     <div className={`post ${postClass}`}> 
       <div>
-        {uid == auth.currentUser.uid ? <button onClick={deletePost}>{"delete"}</button> : <p></p>}
+        {/* only display delete on Post objects that belong to current user */}
+        {uid == auth.currentUser.uid ? <button onClick={deletePost}>{"delete"}</button> : <p></p>} 
       </div>
-      <p>{auth.currentUser.displayName}</p>
+      <p>{displayName}</p>
       <img src={photoURL}/>
       <p>{text}</p>
       <button onClick={likePost}>{`likes: ${likes}`}</button>
