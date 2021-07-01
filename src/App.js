@@ -79,9 +79,9 @@ const SignOut = () => {
 const MainPage = () =>{
   const { uid, photoURL } = auth.currentUser; //user's google uid and profile image
 
-  const maxPost = 10; // used in posts, only display 5 post at a time
+  const maxPost = 5; // used in posts, only display 5 post at a time
   const postsRef = firestore.collection('posts'); // gets collection from database called posts
-  const query = postsRef.orderBy('createdAt').limit(25); //orders collection of objects by createdAt key
+  const query = postsRef.orderBy('createdAt', "desc").limit(maxPost); //orders collection of objects by createdAt key
   
 
   const [posts] = useCollectionData(query, {idField: 'id'}); //listens on real-time to data with a hook and gets the collection
@@ -236,7 +236,7 @@ const MainPage = () =>{
       
       {/* MainPage */}
       <main>
-        {posts && posts.reverse().slice(0, maxPost).map(post => <Post key={post.id} post={post}/>)}
+        {posts && posts.map(post => <Post key={post.id} post={post}/>)}
         {/* need a load more button */}
 
         {/* <div ref={dummy}></div> */}
