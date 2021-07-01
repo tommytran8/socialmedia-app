@@ -79,14 +79,15 @@ const SignOut = () => {
 const MainPage = () =>{
   const { uid, photoURL } = auth.currentUser; //user's google uid and profile image
 
+  /** WORK ON CHANNELS HERE 07/01/21 */
   const maxPost = 5; // used in posts, only display 5 post at a time
   const postsRef = firestore.collection('posts'); // gets collection from database called posts
   const query = postsRef.orderBy('createdAt', "desc").limit(maxPost); //orders collection of objects by createdAt key
-  
 
   const [posts] = useCollectionData(query, {idField: 'id'}); //listens on real-time to data with a hook and gets the collection
   const [formValue, setFormValue] = useState(''); //react's state hook that changes its value real-time
   const [emoji, setEmojiPicker] = useState(false);
+  const [fileT, setFile] = useState(null);
   const [fileButton, setFileButton] = useState(false);
   const [fileURL, setFileURL] = useState(null);
   const [fileName, setFileName] = useState(null);
@@ -98,12 +99,13 @@ const MainPage = () =>{
   const sendpost = async(e) => {
     e.preventDefault();
 
-    // console.log(fileName, fileType, fileURL);
-
+    // setFileButton(true);
+    // document.getElementById("add_reply").disabled = true;
+    /* 10. problem where file will not upload correctly if user (refreshes page/delete post/upload new file) before upload is complete*/
 
     await postsRef.add({ //adds new post to collection on firestone
       text: filter.isProfane(formValue) ? filter.clean(formValue) : formValue,
-      fileURL: fileURL,
+      fileURL: fileURL, //uses temp url until new one is created
       fileName: fileName,
       fileType: fileType,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -113,9 +115,48 @@ const MainPage = () =>{
       likes: 0,
       usersLiked: []
     })
+    .then((post)=>{
+      // console.log(`Post id: ${post.id}`);
+      // console.log(fileT);
+      if (fileT){
+        const storageRef = storage.ref(`${uid}/${post.id}`);
+        const upload = storageRef.put(fileT);
+        // setFileButton(true);
+        upload.on('state_changed', 
+          (snapshot) => {
+            // Observe state change events such as progress, pause, and resume
+            // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+            let progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log(progress);
+          }, 
+          (error) => {
+            // Handle unsuccessful uploads
+          }, 
+          () => {
+            // Handle successful uploads on complete
+            upload.snapshot.ref.getDownloadURL().then((downloadURL) => {
+              console.log('File available at', downloadURL);
+              // setFileButton(false);
+              post.update({
+                fileURL: downloadURL
+              })
+              .then(() => {
+                  console.log("Document successfully updated!");
+              })
+              .catch((error) => {
+                  // The document probably doesn't exist.
+                  console.error("Error updating document: ", error);
+              });
+
+            })
+          }
+        );
+      }
+    })
     setFormValue(''); //resets MainPage input field
     setFileButton(false);
     setEmojiPicker(false);
+    setFile(null);
     setFileURL(null);
     setFileName(null);
     setFileType(null);
@@ -151,79 +192,64 @@ const MainPage = () =>{
           {/* file upload */}
           <button disabled={fileButton} onClick={(e)=>{e.preventDefault(); document.getElementById("file").click() }}>Upload Media</button> {/* WORK HERE 06/26/21 : 
                                                                                                                DONE   1. NEED set it so that Upload Media immediately lets you choose file without using Choose File input. Upload Media should also be a paper clip like modern apps.
-                                                                                                                      2. Also need to fix some permission issues that sometimes causes app to not show images/files saved on firebase storage server
-                                                                                                                      3. MAYBE also delete images off of server when user deletes post
-                                                                                                                      4. MAYBE also have unique names for each image so it doesnt affect images with same file names
+                                                                                                               DONE   2. Also need to fix some permission issues that sometimes causes app to not show images/files saved on firebase storage server
+                                                                                                               DONE   3. MAYBE also delete images off of server when user deletes post
+                                                                                                               DONE   4. MAYBE also have unique names for each image so it doesnt affect images with same file names
                                                                                                                       5. Work on channels / profiles
                                                                                                                       6. UI
-                                                                                                                      7. search bar? */}
+                                                                                                                      7. Limit amount of post per user OR Limit amount of post by a user per day? search bar? 
+                                                                                                                      8. Load more post button => loads more than 5 post
+                                                                                                                      9. search bar
+                                                                                                                      10. problem where file will not upload correctly if user (refreshes page/delete post/upload new file) before upload is complete*/}
           
           <input id="file" type={"file"} onChange={(e)=>{
             const file = e.target.files[0]; 
             if (file) { // checks if user chooses a file
-              const storageRef = storage.ref(`${uid}/${file.name}`);
-              storageRef.getDownloadURL()
-              .then((downloadURL) => {
-                console.log('File available at', downloadURL);
-                setFileButton(false);
-                if (file.type.startsWith("image")) {
-                  const loadedfile = document.getElementById("img");
-                  loadedfile.src = downloadURL;
-                  loadedfile.height = 250;
-                }
-                else {
-                  const loadedfile = document.getElementById("link");
-                  loadedfile.href = downloadURL;
-                  loadedfile.innerText = file.name;
-                }
-                setFileURL(downloadURL);
-                setFileName(file.name);
-                setFileType(file.type);
-              })
-              .catch((error)=>{
-                const upload = storageRef.put(file);
-                setFileButton(true);
+              setFile(file);
+              const storageRef = storage.ref(`${uid}/${"temp"}`);
+              const upload = storageRef.put(file);
+              setFileButton(true);
 
-                upload.on('state_changed', 
-                  (snapshot) => {
-                    // Observe state change events such as progress, pause, and resume
-                    // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
-                    let progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    document.getElementById("file_progress").value = progress;
-                    // switch (snapshot.state) {
-                    //   case firebase.storage.TaskState.PAUSED: // or 'paused'
-                    //     console.log('Upload is paused');
-                    //     break;
-                    //   case firebase.storage.TaskState.RUNNING: // or 'running'
-                    //     console.log('Upload is running');
-                    //     break;
-                    // }
-                  }, 
-                  (error) => {
-                    // Handle unsuccessful uploads
-                  }, 
-                  () => {
-                    // Handle successful uploads on complete
-                    upload.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                      console.log('File available at', downloadURL);
-                      setFileButton(false);
-                      if (file.type.startsWith("image")) {
-                        const loadedfile = document.getElementById("img");
-                        loadedfile.src = downloadURL;
-                        loadedfile.height = 250;
-                      }
-                      else {
-                        const loadedfile = document.getElementById("link");
-                        loadedfile.href = downloadURL;
-                        loadedfile.innerText = file.name;
-                      }
-                      setFileURL(downloadURL);
-                      setFileName(file.name);
-                      setFileType(file.type);
-                    })
-                  }
-                );
-              });
+              upload.on('state_changed', 
+                (snapshot) => {
+                  // Observe state change events such as progress, pause, and resume
+                  // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+                  let progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                  document.getElementById("file_progress").value = progress;
+                  // switch (snapshot.state) {
+                  //   case firebase.storage.TaskState.PAUSED: // or 'paused'
+                  //     console.log('Upload is paused');
+                  //     break;
+                  //   case firebase.storage.TaskState.RUNNING: // or 'running'
+                  //     console.log('Upload is running');
+                  //     break;
+                  // }
+                }, 
+                (error) => {
+                  // Handle unsuccessful uploads
+                }, 
+                () => {
+                  // Handle successful uploads on complete
+                  upload.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                    console.log('File available at', downloadURL);
+                    setFileButton(false);
+                    if (file.type.startsWith("image")) {
+                      const loadedfile = document.getElementById("img");
+                      loadedfile.src = downloadURL;
+                      loadedfile.height = 250;
+                    }
+                    else {
+                      const loadedfile = document.getElementById("link");
+                      loadedfile.href = downloadURL;
+                      loadedfile.innerText = file.name;
+                    }
+                    setFileURL(downloadURL);
+                    setFileName(file.name);
+                    setFileType(file.type);
+                    e.target.value = '';
+                  })
+                }
+              );
             }
           }} style={{display: 'none'}}>
           </input>
@@ -254,10 +280,19 @@ const Post = (props) => {
   
   const deletePost = ()=>{
     if (window.confirm("Are you sure you want to delete this post?")){
+      //deletes post from firestore database
       firestore.collection("posts").doc(props.post.id).delete()
       .then(()=>{
         console.log(`Deleted post with post: ${text} by ${auth.currentUser.displayName}`)
       })
+
+      //deletes file attached to post from firebase storage
+      const storageRef = storage.ref(`${uid}/${props.post.id}`);
+      storageRef.delete().then(() => {
+        console.log(`Deleted file attached to post: ${text} by ${auth.currentUser.displayName}`)
+      }).catch((error) => {
+        console.log("File does not exist");
+      });
     }
   }
   const likePost = ()=>{
