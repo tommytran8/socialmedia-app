@@ -63,21 +63,47 @@ const SignIn = ()=>{
     auth.signInWithRedirect(provider);
   }
   return (
-    <>
+    <div id={"sign-in-page"}>
       <h2>My Social Media App</h2>
       <button onClick={signInWithGoogle}><img src={googlelogo} alt={"Google"} width={50}/>Sign in with Google</button>
-    </>
+    </div>
   )
 }
 
 const SignOut = () => {
   return auth.currentUser && (
-    <button onClick= {() => auth.signOut()}>Sign Out</button>
+    <button id={"sign-out-button"} onClick= {() => auth.signOut()}>Sign Out</button>
   )
 }
 
 const HomePage = () => {
+
   const { uid, photoURL } = auth.currentUser; //user's google uid and profile image
+  const userdataRef = firestore.collection("userdata");
+
+  userdataRef.get().then((users)=>{ //updates userdata document if new user joins
+    let check = false;
+    for (const u of users.docs) {
+      // console.log(u.data().userID)
+      if (u.data().userID == uid) {
+        check = true; 
+        // console.log("user in database", uid)
+        break;
+      }
+    }
+    if (!check) {
+      // console.log("user NOT in database", uid)
+      userdataRef.doc(uid).set({
+        numOfPost: 0,
+        numOfChannels: 0,
+        numOfFiles: 0,
+        userID: uid
+      })
+    }
+  })
+
+
+  
   const channelsRef = firestore.collection("channels")
   const query = channelsRef.orderBy('createdAt', "desc");
   const [channels] = useCollectionData(query, {idField: 'id'});
@@ -105,7 +131,7 @@ const HomePage = () => {
     }
   }
 
-  const checkUser = async ()=>{
+  const checkSubmit = async ()=>{
     await userDataRef.get().then((user)=>{
       if(user.exists){
         user.data().numOfChannels < 3 ? addChannel() : alert("A user cannot create more than 3 channels")
@@ -113,27 +139,59 @@ const HomePage = () => {
     })
   }
 
-  // WORKING HERE 07/03/21 on deleting channels, afterwards work on UI
-  // const chan =query.limit(1)
-  // const deleteChannel = async ()=>{
-    
-  //   await chan.get().then((ch)=> {
-  //     channelsRef.doc(currentChannelID ? currentChannelID : ch.id).get().then((c)=>{
-  //       console.log(c.data())
-  //     })
-  //   })
-  // }
+  // WORK HERE 07/03/21 on deleting channels, afterwards work on UI
+ 
+  const channelOwner = async ()=>{
+    if (currentChannelID) {
+      await channelsRef.doc(currentChannelID).get().then((ch)=>{
+        // console.log(ch.data().createdBy, uid)
+        if (ch.data().createdBy === uid) deleteChannel(currentChannelID)
+        else alert("You're not the channel owner!")
+        
+      })
+    }
+    else {
+      await query.limit(1).get().then((ch)=> {
+        // console.log(ch.docs[0].data().createdBy === uid)
+        if (ch.docs[0].data().createdBy === uid) deleteChannel(ch.docs[0].id)
+        else alert("You're not the channel owner!")
+      })
+    }
+  }
+  const deleteChannel = async (currentChannelID)=>{ 
+    if (window.confirm("Deleting channel, Click ok to confirm, cancel to cancel")){
+      if (window.confirm("This action is irreversible, Are you sure?")){
+        await channelsRef.doc(currentChannelID).get().then((ch)=>{
+          console.log(ch.data());
+        })
+      }
+    }
+  }
 
   return (
-    <>
+    <div id={"home-page"}>
       <nav>
-        <button onClick={checkUser}>+</button> 
-        {/* <button onClick={deleteChannel}>-</button> */}
-        
+        <div id={"nav-user"}>
+          <img src={auth.currentUser.photoURL} height={50}></img>
+          <p>{auth.currentUser.displayName}</p>
+          <svg width="43" height="30" viewBox="0 0 43 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21.3652 29.2383L0.710938 8.4082L8.35742 0.761719L21.3652 13.7695L34.4609 0.761719L42.1074 8.4082L21.3652 29.2383Z" fill="white"/>
+          </svg>
+
+        </div>
+      
+        <div id={"nav-channels-header"}>
+          <h2>{"Channels"}</h2>
+          <button onClick={checkSubmit}>+</button> 
+          <button onClick={channelOwner}>-</button>
+        </div>
+
+        <div id={"nav-channels-body"}>
         {channels && channels.map(channel=>{
-          return <button key={channel.channelName} 
-                         onClick={()=> {setCurrentChannelID(channel.id); setCurrentChannelName(channel.channelName)}}>{channel.channelName}</button>
+          return <button className={"nav-channel-names"} key={channel.channelName} 
+                        onClick={()=> {setCurrentChannelID(channel.id); setCurrentChannelName(channel.channelName)}}>{channel.channelName}</button>
         })}
+        </div>
       </nav>
       
       {defaultChannel && defaultChannel.map(channel=>{
@@ -141,14 +199,15 @@ const HomePage = () => {
                         channelID={currentChannelID ? currentChannelID : channel.id}
                         channelName={currentChannelName ? currentChannelName : channel.channelName}></Channel>
       })}
-      {/* {currentChannel ? <Channel channel={currentChannel}></Channel> : <>{"Select a channel to join"}</>} */}
-    </>
+    </div>
   )
 }
  
 const Channel = (props) =>{
   const { uid, photoURL } = auth.currentUser; //user's google uid and profile image
-  const maxPost = 5; // used in posts, only display 5 post at a time
+  const [maxPost, setMaxPost] = useState(5); // used in posts, only display 5 post at a time
+  const increasePost = 20; //increase number of post displayed, 20 increments at a time
+
   const postsRef = firestore.collection(props.channelID); // gets collection from database called posts
   const query = postsRef.orderBy('createdAt', "desc").limit(maxPost); //orders collection of objects by createdAt key
   const userDataRef = firestore.collection("userdata").doc(uid);
@@ -157,20 +216,21 @@ const Channel = (props) =>{
   const [formValue, setFormValue] = useState(''); //react's state hook that changes its value real-time
   const [emoji, setEmojiPicker] = useState(false);
   const [fileT, setFile] = useState(null);
-  const [fileButton, setFileButton] = useState(false);
+  const [fileButton, setFileButton] = useState(false); //disables add_reply, upload_media, and delete_button(s) 
   const [fileURL, setFileURL] = useState(null);
   const [fileName, setFileName] = useState(null);
   const [fileType, setFileType] = useState(null);
+
+  const [latestPost, setLatestPost] = useState(true); //allows load more messages to work LOL
+  const [progressBar, setProgressBar] = useState(false); //progress bar on upload
+
   // const dummy = useRef() //react's ref hook, so window will always have refernce in view (to auto-scroll MainPage)
 
   const filter = new Filter(); //filters out bad words
 
   const sendpost = async(e) => {
-
-    // setFileButton(true);
-    // document.getElementById("add_reply").disabled = true;
-    /* 10. problem where file will not upload correctly if user (refreshes page/delete post/upload new file) before upload is complete*/
-
+    setFileButton(true); //disables buttons
+  
     await postsRef.add({ //adds new post to collection on firestone
       text: filter.isProfane(formValue) ? filter.clean(formValue) : formValue,
       fileURL: fileURL, //uses temp url until new one is created
@@ -189,7 +249,6 @@ const Channel = (props) =>{
       if (fileT){
         const storageRef = storage.ref(`${uid}/${post.id}`);
         const upload = storageRef.put(fileT);
-        // setFileButton(true);
         upload.on('state_changed', 
           (snapshot) => {
             // Observe state change events such as progress, pause, and resume
@@ -204,7 +263,7 @@ const Channel = (props) =>{
             // Handle successful uploads on complete
             upload.snapshot.ref.getDownloadURL().then((downloadURL) => {
               console.log('File available at', downloadURL);
-              // setFileButton(false);
+              setFileButton(false); //enable buttons
               post.update({
                 fileURL: downloadURL
               })
@@ -223,12 +282,14 @@ const Channel = (props) =>{
           numOfFiles: firebase.firestore.FieldValue.increment(1), 
         })
       }
+      else {
+        setFileButton(false); //enable buttons
+      }
     })
     await userDataRef.update({
       numOfPost: firebase.firestore.FieldValue.increment(1), 
     })
     setFormValue(''); //resets MainPage input field
-    setFileButton(false);
     setEmojiPicker(false);
     setFile(null);
     setFileURL(null);
@@ -250,7 +311,7 @@ const Channel = (props) =>{
     setEmojiPicker(!emoji);
   }
 
-  const checkUser = async (e)=>{
+  const checkSubmit = async (e)=>{
     e.preventDefault();
     await userDataRef.get().then((user)=>{
       if(user.exists){
@@ -267,6 +328,7 @@ const Channel = (props) =>{
       const storageRef = storage.ref(`${uid}/${"temp"}`);
       const upload = storageRef.put(file);
       setFileButton(true);
+      setProgressBar(true)
 
       upload.on('state_changed', 
         (snapshot) => {
@@ -283,6 +345,7 @@ const Channel = (props) =>{
           upload.snapshot.ref.getDownloadURL().then((downloadURL) => {
             console.log('File available at', downloadURL);
             setFileButton(false);
+            setProgressBar(false);
             if (file.type.startsWith("image")) {
               const loadedfile = document.getElementById("img");
               loadedfile.src = downloadURL;
@@ -303,12 +366,24 @@ const Channel = (props) =>{
     }
   }
 
+  const loadMorePost = ()=>{
+    postsRef.orderBy('createdAt', "desc").limit(maxPost).get()
+    .then((p)=>{
+      setLatestPost(p.docs[maxPost-1].data().createdAt);
+    })
+    .catch((error)=>{
+      console.log("All post are loaded")
+      setLatestPost(false);
+    })
+    setMaxPost(maxPost + increasePost);
+  }
+  
   return (
-    <>
+    <div id={"main-display"}>
       {/* MainPage input */}
-      <section>
+      <section id={"user-input"}>
         
-        <form onSubmit={checkUser}>
+        <form onSubmit={checkSubmit}>
           {/* user reply */}
           <button onClick={toggleEmojiPicker}  >:)</button>
           <input value={formValue} placeholder={`Whats on your mind, ${auth.currentUser.displayName}?`} onChange={(e) => {setFormValue(e.target.value);}} onKeyPress={(e)=>{ if (e.key === "Enter") { e.preventDefault(); document.getElementById("add_reply").click() }}} /> {/* bind hook to form input */}
@@ -317,7 +392,7 @@ const Channel = (props) =>{
           <button id="add_reply" type={"submit"} disabled={ fileButton || (!formValue && fileURL == null) }>Add Reply</button>
 
           {/* file upload */}
-          <button disabled={fileButton} onClick={(e)=>{e.preventDefault(); document.getElementById("file").click() }}>Upload Media</button> {/* WORK HERE 06/26/21 : 
+          <button id="upload-media" disabled={fileButton} onClick={(e)=>{e.preventDefault(); document.getElementById("file").click() }}>Upload Media</button> {/* WORK HERE 06/26/21 : 
                                                                                                                DONE   1. NEED set it so that Upload Media immediately lets you choose file without using Choose File input. Upload Media should also be a paper clip like modern apps.
                                                                                                                DONE   2. Also need to fix some permission issues that sometimes causes app to not show images/files saved on firebase storage server
                                                                                                                DONE   3. MAYBE also delete images off of server when user deletes post
@@ -327,10 +402,15 @@ const Channel = (props) =>{
                                                                                                                DONE   7.1. Limit amount of post per user (1000) 
                                                                                                                DONE   7.3. Limit amount of files per user (10)
                                                                                                                DONE   7.2. Limit amount of channel per user (3)
-                                                                                                                      8. Load more post button => loads more than 5 post
+                                                                                                               DONE   8. Load more post button => loads more than 5 post
                                                                                                                       9. search bar
-                                                                                                                      10. problem where file will not upload correctly if user (refreshes page/delete post/upload new file) before upload is complete, 
-                                                                                                                          but refresh pages will prob be fine when its up on server, just need to prevent user from deleting posting and uploading new file as post loads*/}
+                                                                                                               DONE   10. problem where file will not upload correctly if user (refreshes page/delete post/upload new file) before upload is complete, 
+                                                                                                                          but refresh pages will prob be fine when its up on server, just need to prevent user from deleting posting and uploading new file as post loads
+                                                                                                                      11. create server / invite users to server
+                                                                                                               HALF   12. delete channels / delete servers
+                                                                                                               DONE   13. update userdata document when a new user enters (might need to check for bugs/ edge cases)
+                                                                                                                      14. Sesson id?? need to see if it works on deploy first
+                                                                                                                      */}
           
           <input id="file" type={"file"} onChange={async (e)=>{
             await userDataRef.get().then((user)=>{
@@ -345,7 +425,7 @@ const Channel = (props) =>{
             
           }} style={{display: 'none'}}>
           </input>
-          {fileButton ? <progress id="file_progress" value="0" max= "100" ></progress> : <></>}
+          {progressBar ? <progress id="file_progress" value="0" max= "100" ></progress> : <></>}
         </form>
 
         {/* select emoji */}
@@ -353,17 +433,31 @@ const Channel = (props) =>{
       </section>
       
       {/* MainPage */}
-      <main>
-        {posts && posts.map(post => <Post key={post.id} post={post} channel={props.channelID}/>)}
-        {/* need a load more button */}
-
+      <main id={"channel-display"}>
+        {posts && posts.map(post => <Post key={post.id} post={post} channel={props.channelID} disable={fileButton} />)}
+        
+        {/* load more button */}
+        {/* {latestPost ? <OldPost key={latestPost} channelID={props.channelID} latestPost={latestPost} increasePost={increasePost}/> : <></>} */}
+        {latestPost ? <button id="load-post" onClick={loadMorePost}>load more messages</button> : <></>}
         {/* <div ref={dummy}></div> */}
       </main>
 
       
-    </>
+    </div>
   )
 }
+
+// const OldPost = (props)=>{ //need to create another react component to load older post/ need to select post usng firestore "where" to find 20 (or all) post older than the current oldest loaded one 
+//     const postsRef = firestore.collection(props.channelID); // gets collection from database called posts
+//     const olderPostsRef = postsRef.where("createdAt", "<", props.latestPost).orderBy('createdAt', "desc").limit(props.increasePost);
+//     const [olderPosts] = useCollectionData(olderPostsRef, {idField: 'id'});
+//     return ( 
+//     <>
+//      {olderPosts && olderPosts.map(post => <Post key={post.id} post={post} channel={props.channelID} />) }
+//     </>
+//     )
+  
+// }
 
 const Post = (props) => {
   const {text, fileURL, fileName, fileType, uid, photoURL, displayName, likes, usersLiked} = props.post;
@@ -429,13 +523,13 @@ const Post = (props) => {
     <div className={`post ${postClass}`}> 
       <div>
         {/* only display delete on Post objects that belong to current user */}
-        {uid == auth.currentUser.uid ? <button onClick={deletePost}>{"delete"}</button> : <p></p>} 
+        {uid == auth.currentUser.uid ? <button className={"delete_button"} disabled={props.disable} onClick={deletePost}>{"delete"}</button> : <p></p>} 
       </div>
       <p>{displayName}</p>
       <img src={photoURL}/>
       <p>{text}</p>
       {fileURL ? fileType.startsWith("image") ? <img src={fileURL} height="250"></img> : <a href={fileURL} target="_blank">{fileName}</a> : <></>}
-      <button onClick={likePost}>{`likes: ${likes}`}</button>
+      <button className={"like_button"} onClick={likePost}>{`likes: ${likes}`}</button>
     </div>
   ) 
 }
