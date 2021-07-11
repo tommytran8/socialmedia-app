@@ -22,5 +22,24 @@
 [ ] 13. Sesson id?? need to see if it works on deploy first
 [ ] 14. Edit post message with setting icon
 
-## Link
+## LINK
 
+LINK HERE
+
+## SAMPLE IMAGES
+
+#### Channel 1
+
+![Channel 1 Image](./sample_photos/sample_1.PNG)
+
+#### Using emojis
+
+![Using emojis Image](./sample_photos/sample_2.PNG)
+
+#### Channel 2
+
+![Channel 2 Image](./sample_photos/sample_3.PNG)
+
+#### Uploading Media 
+
+![Uploading Media Image](./sample_photos/sample_4.PNG)
