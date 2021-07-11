@@ -11,9 +11,13 @@ import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { useStorage } from 'react-firebase-hooks/storage';
 
 import googlelogo from './assets/google.png';
+import settingsicon from './assets/settings.png';
+import likeicon from './assets/like.png'
+import smileicon from './assets/smile.png'
 
 import 'emoji-mart/css/emoji-mart.css';
 import { Picker } from 'emoji-mart';
+
 
 
 const {
@@ -46,12 +50,9 @@ const App = () => {
   const [user] = useAuthState(auth);
   return (
     <div className="App">
-      <header>
-        <SignOut />
-      </header>
       <section>
         {/* if a user is signed in auth */}
-        {user ? <HomePage/> : <SignIn/>} 
+        {user ? <MainPage/> : <SignIn/>} 
       </section>
     </div>
   );
@@ -64,8 +65,11 @@ const SignIn = ()=>{
   }
   return (
     <div id={"sign-in-page"}>
-      <h2>My Social Media App</h2>
-      <button onClick={signInWithGoogle}><img src={googlelogo} alt={"Google"} width={50}/>Sign in with Google</button>
+      <h2>My Social Media App: <u>a slack clone</u></h2>
+      
+      <h4>Sign in with Google</h4>
+      <img src={googlelogo} alt={"Google"} width={30} height={30} onClick={signInWithGoogle}/>
+      {/* <button onClick={signInWithGoogle}><img src={googlelogo} alt={"Google"} width={40} height={40}/></button> */}
     </div>
   )
 }
@@ -76,7 +80,7 @@ const SignOut = () => {
   )
 }
 
-const HomePage = () => {
+const MainPage = () => {
 
   const { uid, photoURL } = auth.currentUser; //user's google uid and profile image
   const userdataRef = firestore.collection("userdata");
@@ -114,6 +118,7 @@ const HomePage = () => {
 
   const [currentChannelID, setCurrentChannelID] = useState(null);
   const [currentChannelName, setCurrentChannelName] = useState(null);
+  const [userClick, setUserClick] = useState(false);
 
   const addChannel = async ()=>{
     const channel = prompt("Please enter your channel name", "");
@@ -138,8 +143,6 @@ const HomePage = () => {
       }
     })
   }
-
-  // WORK HERE 07/03/21 on deleting channels, afterwards work on UI
  
   const channelOwner = async ()=>{
     if (currentChannelID) {
@@ -161,36 +164,51 @@ const HomePage = () => {
   const deleteChannel = async (currentChannelID)=>{ 
     if (window.confirm("Deleting channel, Click ok to confirm, cancel to cancel")){
       if (window.confirm("This action is irreversible, Are you sure?")){
-        await channelsRef.doc(currentChannelID).get().then((ch)=>{
-          console.log(ch.data());
-        })
+        // await channelsRef.doc(currentChannelID).get().then((ch)=>{
+        //   console.log(ch.data()); // WORK HERE: 07/10/21
+        // })
+        console.log("Not yet implemented");
       }
     }
   }
 
+  const handleUserClick = ()=>{
+    setUserClick(!userClick);
+  }
   return (
     <div id={"home-page"}>
       <nav>
-        <div id={"nav-user"}>
-          <img src={auth.currentUser.photoURL} height={50}></img>
-          <p>{auth.currentUser.displayName}</p>
-          <svg width="43" height="30" viewBox="0 0 43 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M21.3652 29.2383L0.710938 8.4082L8.35742 0.761719L21.3652 13.7695L34.4609 0.761719L42.1074 8.4082L21.3652 29.2383Z" fill="white"/>
-          </svg>
+        <div>
+          <div id={"nav-user"} onClick={handleUserClick}>
+            <img src={auth.currentUser.photoURL} height={40}></img>
+            <p>{auth.currentUser.displayName}</p>
+            <svg id={"user-svg"} className={userClick ? "user-click-on" : "user-click-off"} width="43" height="30" viewBox="0 0 43 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21.3652 29.2383L0.710938 8.4082L8.35742 0.761719L21.3652 13.7695L34.4609 0.761719L42.1074 8.4082L21.3652 29.2383Z" fill="white"/>
+            </svg>
 
-        </div>
-      
-        <div id={"nav-channels-header"}>
-          <h2>{"Channels"}</h2>
-          <button onClick={checkSubmit}>+</button> 
-          <button onClick={channelOwner}>-</button>
-        </div>
+          </div>
+        
+          {userClick ? 
+          <div id={"SignOut"}>
+            <SignOut/>
+          </div> :
+          <>
+            <div id={"nav-channels-header"}>
+              <h2>{"Channels: "}</h2>
+              <button onClick={checkSubmit}>+</button> 
+              <button onClick={channelOwner}>-</button>
+            </div>
 
-        <div id={"nav-channels-body"}>
-        {channels && channels.map(channel=>{
-          return <button className={"nav-channel-names"} key={channel.channelName} 
-                        onClick={()=> {setCurrentChannelID(channel.id); setCurrentChannelName(channel.channelName)}}>{channel.channelName}</button>
-        })}
+            <div id={"nav-channels-body"}>
+            {channels && channels.map(channel=>{
+              return <div className={"nav-channel-names"}> <button key={channel.channelName} 
+                            onClick={()=> {setCurrentChannelID(channel.id); setCurrentChannelName(channel.channelName)}}>{channel.channelName} <div></div></button>
+                            </div>
+            })}
+            </div>
+          </>
+          }
+          
         </div>
       </nav>
       
@@ -207,6 +225,7 @@ const Channel = (props) =>{
   const { uid, photoURL } = auth.currentUser; //user's google uid and profile image
   const [maxPost, setMaxPost] = useState(5); // used in posts, only display 5 post at a time
   const increasePost = 20; //increase number of post displayed, 20 increments at a time
+  const maxMessageLength = 100;
 
   const postsRef = firestore.collection(props.channelID); // gets collection from database called posts
   const query = postsRef.orderBy('createdAt', "desc").limit(maxPost); //orders collection of objects by createdAt key
@@ -221,90 +240,99 @@ const Channel = (props) =>{
   const [fileName, setFileName] = useState(null);
   const [fileType, setFileType] = useState(null);
 
-  const [latestPost, setLatestPost] = useState(true); //allows load more messages to work LOL
+  // const [latestPost, setLatestPost] = useState(true); //allows load more messages to work
   const [progressBar, setProgressBar] = useState(false); //progress bar on upload
 
-  // const dummy = useRef() //react's ref hook, so window will always have refernce in view (to auto-scroll MainPage)
+  const dummy = useRef() //react's ref hook, so window will always have refernce in view (to auto-scroll in channel display)
 
   const filter = new Filter(); //filters out bad words
 
   const sendpost = async(e) => {
-    setFileButton(true); //disables buttons
-  
-    await postsRef.add({ //adds new post to collection on firestone
-      text: filter.isProfane(formValue) ? filter.clean(formValue) : formValue,
-      fileURL: fileURL, //uses temp url until new one is created
-      fileName: fileName,
-      fileType: fileType,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      uid, //google uid of user that made post
-      photoURL,
-      displayName: auth.currentUser.displayName,
-      likes: 0,
-      usersLiked: []
-    })
-    .then(async (post)=>{
-      // console.log(`Post id: ${post.id}`);
-      // console.log(fileT);
-      if (fileT){
-        const storageRef = storage.ref(`${uid}/${post.id}`);
-        const upload = storageRef.put(fileT);
-        upload.on('state_changed', 
-          (snapshot) => {
-            // Observe state change events such as progress, pause, and resume
-            // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
-            let progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            console.log(progress);
-          }, 
-          (error) => {
-            // Handle unsuccessful uploads
-          }, 
-          () => {
-            // Handle successful uploads on complete
-            upload.snapshot.ref.getDownloadURL().then((downloadURL) => {
-              console.log('File available at', downloadURL);
-              setFileButton(false); //enable buttons
-              post.update({
-                fileURL: downloadURL
-              })
-              .then(() => {
-                  console.log("Document successfully updated!");
-              })
-              .catch((error) => {
-                  // The document probably doesn't exist.
-                  console.error("Error updating document: ", error);
-              });
+    if (formValue.length <= maxMessageLength) {
+      setFileButton(true); //disables buttons
+    
+      await postsRef.add({ //adds new post to collection on firestone
+        text: filter.isProfane(formValue) ? filter.clean(formValue) : formValue,
+        fileURL: fileURL, //uses temp url until new one is created
+        fileName: fileName,
+        fileType: fileType,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        uid, //google uid of user that made post
+        photoURL,
+        displayName: auth.currentUser.displayName,
+        likes: 0,
+        usersLiked: []
+      })
+      .then(async (post)=>{
+        // console.log(`Post id: ${post.id}`);
+        // console.log(fileT);
+        if (fileT){
+          const storageRef = storage.ref(`${uid}/${post.id}`);
+          const upload = storageRef.put(fileT);
+          upload.on('state_changed', 
+            (snapshot) => {
+              // Observe state change events such as progress, pause, and resume
+              // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+              let progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              console.log(progress);
+            }, 
+            (error) => {
+              // Handle unsuccessful uploads
+            }, 
+            () => {
+              // Handle successful uploads on complete
+              upload.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                console.log('File available at', downloadURL);
+                setFileButton(false); //enable buttons
+                post.update({
+                  fileURL: downloadURL
+                })
+                .then(() => {
+                    console.log("Document successfully updated!");
+                })
+                .catch((error) => {
+                    // The document probably doesn't exist.
+                    console.error("Error updating document: ", error);
+                });
 
-            })
-          }
-        );
-        await userDataRef.update({
-          numOfFiles: firebase.firestore.FieldValue.increment(1), 
-        })
-      }
-      else {
-        setFileButton(false); //enable buttons
-      }
-    })
-    await userDataRef.update({
-      numOfPost: firebase.firestore.FieldValue.increment(1), 
-    })
-    setFormValue(''); //resets MainPage input field
-    setEmojiPicker(false);
-    setFile(null);
-    setFileURL(null);
-    setFileName(null);
-    setFileType(null);
-    document.getElementById("img").src = '';
-    document.getElementById("img").height = 0;
-    document.getElementById("link").href = '';
-    document.getElementById("link").innerText = '';
+              })
+            }
+          );
+          await userDataRef.update({
+            numOfFiles: firebase.firestore.FieldValue.increment(1), 
+          })
+        }
+        else {
+          setFileButton(false); //enable buttons
+        }
+      })
+      await userDataRef.update({
+        numOfPost: firebase.firestore.FieldValue.increment(1), 
+      })
 
-    // dummy.current.scrollIntoView({behavior: 'smooth'}); //scroll down
+      document.getElementById("img").src = '';
+      document.getElementById("img").height = 0;
+      document.getElementById("link").href = '';
+      document.getElementById("link").innerText = '';
+
+      setFormValue(''); //resets user input field
+      setEmojiPicker(false);
+      setFile(null);
+      setFileURL(null);
+      setFileName(null);
+      setFileType(null);
+      
+
+      dummy.current.scrollIntoView({behavior: 'smooth'}); //scroll down
+    }
+    else {
+      alert(`Messages at most can only have ${maxMessageLength} characters`)
+    }
   }
 
   const addEmoji = (e)=>{
     setFormValue(`${formValue}${e.native}`);
+    setEmojiPicker(false);
   }
   const toggleEmojiPicker = (e)=>{
     e.preventDefault();
@@ -323,7 +351,8 @@ const Channel = (props) =>{
 
   const uploadFile = (e)=>{
     const file = e.target.files[0]; 
-    if (file && !file.type.startsWith("video") && !file.type.startsWith("audio") && !file.type.includes("MP3" || "MP4")) { // checks if user chooses a file and prevents video/audio upload
+    // console.log(file.type);
+    if (file && (file.type.startsWith("image") || file.type.includes("pdf"))) { // checks if user chooses a file
       setFile(file);
       const storageRef = storage.ref(`${uid}/${"temp"}`);
       const upload = storageRef.put(file);
@@ -350,67 +379,120 @@ const Channel = (props) =>{
               const loadedfile = document.getElementById("img");
               loadedfile.src = downloadURL;
               loadedfile.height = 250;
+
+              document.getElementById("link").href = '';
+              document.getElementById("link").innerText = '';
             }
             else {
               const loadedfile = document.getElementById("link");
               loadedfile.href = downloadURL;
               loadedfile.innerText = file.name;
+
+              document.getElementById("img").src = '';
+              document.getElementById("img").height = 0;
             }
             setFileURL(downloadURL);
             setFileName(file.name);
             setFileType(file.type);
             e.target.value = '';
+            dummy.current.scrollIntoView({behavior: 'smooth'}); //scroll down
           })
         }
       );
     }
   }
 
-  const loadMorePost = ()=>{
-    postsRef.orderBy('createdAt', "desc").limit(maxPost).get()
-    .then((p)=>{
-      setLatestPost(p.docs[maxPost-1].data().createdAt);
-    })
-    .catch((error)=>{
-      console.log("All post are loaded")
-      setLatestPost(false);
-    })
-    setMaxPost(maxPost + increasePost);
+  // const loadMorePost = ()=>{
+  //   postsRef.orderBy('createdAt', "desc").limit(maxPost + increasePost).get()
+  //   .then((p)=>{
+  //     setLatestPost(p.docs[maxPost + increasePost - 1].data().createdAt);
+  //   })
+  //   .catch((error)=>{
+  //     console.log("All post are loaded")
+  //     setLatestPost(false);
+  //   })
+  //   setMaxPost(maxPost + increasePost);
+  // }
+
+  const handleScroll = (e)=>{
+    const estimatePadding = 10;
+    if (e.target.scrollHeight +  Math.floor(e.target.scrollTop) - estimatePadding <= e.target.clientHeight){
+      // if (latestPost) { 
+      //   setLatestPost(false);
+      //   postsRef.orderBy('createdAt', "desc").limit(maxPost + increasePost).get()
+      //   .then((p)=>{
+      //     setLatestPost(p.docs[maxPost + increasePost - 1].data().createdAt);
+      //   })
+      //   .catch((error)=>{
+      //     console.log("All post are loaded")
+      //     setLatestPost(false);
+      //   })
+      //   setMaxPost(maxPost + increasePost);
+      // }
+      if (posts && posts.length >= maxPost) {
+        setMaxPost(maxPost + increasePost);
+      }
+    }
   }
   
   return (
-    <div id={"main-display"}>
-      {/* MainPage input */}
-      <section id={"user-input"}>
+    <div id={"main-display"} onClick={()=>{if (emoji) setEmojiPicker(false); }}>
+      {/* channel display */}
+      <main id={"channel-display"} onScroll={handleScroll}>
+        <div ref={dummy}></div>
+        { fileT || formValue ? <div id={"temp-message"}>
+          <p>{formValue}</p>
+          <a id="link" target="_blank"></a>
+          <img id="img" height="0" src=""></img>  
+          {fileT ? <button onClick={()=>{
+            setFile(null);
+            setFileURL(null);
+            setFileName(null);
+            setFileType(null);
+            document.getElementById("img").src = "";  
+            document.getElementById("img").height = 0; 
+            document.getElementById("link").href = ""; 
+            document.getElementById("link").innerText = ''}}>x</button> : <></>}
+        </div>
+        : <></>}
+        {posts && posts.map(post => <Post key={post.id} post={post} channel={props.channelID} disable={fileButton} />)}
         
+        {/* load more button */}        
+        {/* <button id="load-post" style={{display: 'none'}} onClick={loadMorePost}>load more messages</button>         */}
+      </main>
+
+
+      {/* channel display input */}
+      <section id={"user-input"}>
+      
         <form onSubmit={checkSubmit}>
           {/* user reply */}
-          <button onClick={toggleEmojiPicker}  >:)</button>
-          <input value={formValue} placeholder={`Whats on your mind, ${auth.currentUser.displayName}?`} onChange={(e) => {setFormValue(e.target.value);}} onKeyPress={(e)=>{ if (e.key === "Enter") { e.preventDefault(); document.getElementById("add_reply").click() }}} /> {/* bind hook to form input */}
-          <a id="link" target="_blank"></a>
-          <img id="img" height="0" src=""></img>
+          
+          <div id={"message"}>
+            
+            <input id={"inp"} value={formValue} placeholder={`What's on your mind, ${auth.currentUser.displayName}?`} 
+                  onClick={()=>{dummy.current.scrollIntoView({behavior: 'smooth'})}} 
+                  onChange={(e) => { if (formValue.length < maxMessageLength ) setFormValue(e.target.value) 
+                                    else if (formValue.length >= maxMessageLength && e.target.value.length == formValue.length - 1) {setFormValue(e.target.value) }
+                                    
+                  }} 
+                  onKeyPress={(e)=>{ if (e.key === "Enter") { e.preventDefault(); document.getElementById("add_reply").click()}
+                  }} /> {/* bind hook to form input */}
+            <div>
+              {emoji ? <Picker style={{position: "absolute", right: "0", transform: "translateX(-20px) translateY(-101%)"}} onSelect={addEmoji} /> : <></>}
+              <button onClick={toggleEmojiPicker}><img src={smileicon} height={25} width={25}></img></button>
+              <p>{`${formValue.length}/${maxMessageLength}`}</p>  
+            </div>
+            
+          </div>
+          
           <button id="add_reply" type={"submit"} disabled={ fileButton || (!formValue && fileURL == null) }>Add Reply</button>
 
           {/* file upload */}
-          <button id="upload-media" disabled={fileButton} onClick={(e)=>{e.preventDefault(); document.getElementById("file").click() }}>Upload Media</button> {/* WORK HERE 06/26/21 : 
-                                                                                                               DONE   1. NEED set it so that Upload Media immediately lets you choose file without using Choose File input. Upload Media should also be a paper clip like modern apps.
-                                                                                                               DONE   2. Also need to fix some permission issues that sometimes causes app to not show images/files saved on firebase storage server
-                                                                                                               DONE   3. MAYBE also delete images off of server when user deletes post
-                                                                                                               DONE   4. MAYBE also have unique names for each image so it doesnt affect images with same file names
-                                                                                                               DONE   5. Work on channels / profiles (Add channels for different forum discussions)
-                                                                                                                      6. UI
-                                                                                                               DONE   7.1. Limit amount of post per user (1000) 
-                                                                                                               DONE   7.3. Limit amount of files per user (10)
-                                                                                                               DONE   7.2. Limit amount of channel per user (3)
-                                                                                                               DONE   8. Load more post button => loads more than 5 post
-                                                                                                                      9. search bar
-                                                                                                               DONE   10. problem where file will not upload correctly if user (refreshes page/delete post/upload new file) before upload is complete, 
-                                                                                                                          but refresh pages will prob be fine when its up on server, just need to prevent user from deleting posting and uploading new file as post loads
-                                                                                                                      11. create server / invite users to server
-                                                                                                               HALF   12. delete channels / delete servers
-                                                                                                               DONE   13. update userdata document when a new user enters (might need to check for bugs/ edge cases)
-                                                                                                                      14. Sesson id?? need to see if it works on deploy first
-                                                                                                                      */}
+          <button id="upload-media" disabled={fileButton} 
+                  onClick={(e)=>{e.preventDefault(); 
+                                dummy.current.scrollIntoView({behavior: 'smooth'}); 
+                                document.getElementById("file").click() }}>Upload Media</button> 
           
           <input id="file" type={"file"} onChange={async (e)=>{
             await userDataRef.get().then((user)=>{
@@ -429,35 +511,12 @@ const Channel = (props) =>{
         </form>
 
         {/* select emoji */}
-        {emoji ? <Picker onSelect={addEmoji} /> : <></>}
-      </section>
-      
-      {/* MainPage */}
-      <main id={"channel-display"}>
-        {posts && posts.map(post => <Post key={post.id} post={post} channel={props.channelID} disable={fileButton} />)}
         
-        {/* load more button */}
-        {/* {latestPost ? <OldPost key={latestPost} channelID={props.channelID} latestPost={latestPost} increasePost={increasePost}/> : <></>} */}
-        {latestPost ? <button id="load-post" onClick={loadMorePost}>load more messages</button> : <></>}
-        {/* <div ref={dummy}></div> */}
-      </main>
-
+      </section>
       
     </div>
   )
 }
-
-// const OldPost = (props)=>{ //need to create another react component to load older post/ need to select post usng firestore "where" to find 20 (or all) post older than the current oldest loaded one 
-//     const postsRef = firestore.collection(props.channelID); // gets collection from database called posts
-//     const olderPostsRef = postsRef.where("createdAt", "<", props.latestPost).orderBy('createdAt', "desc").limit(props.increasePost);
-//     const [olderPosts] = useCollectionData(olderPostsRef, {idField: 'id'});
-//     return ( 
-//     <>
-//      {olderPosts && olderPosts.map(post => <Post key={post.id} post={post} channel={props.channelID} />) }
-//     </>
-//     )
-  
-// }
 
 const Post = (props) => {
   const {text, fileURL, fileName, fileType, uid, photoURL, displayName, likes, usersLiked} = props.post;
@@ -518,20 +577,32 @@ const Post = (props) => {
     }
   }
 
+  const [checkDelete, setCheckDelete] = useState(false);
+  const handlePostSettings = ()=>{
+    setCheckDelete(!checkDelete)
+  }
   return (
     // different style depending on sent or received className
-    <div className={`post ${postClass}`}> 
+    <div className={`post ${postClass}`} > 
+      <img height={"50"} src={photoURL}/>
+      <div>
+        <p>{displayName}</p>
+        <p>{text}</p>
+        {fileURL ? fileType.startsWith("image") ? <img src={fileURL} height="250"></img> : <a href={fileURL} target="_blank">{fileName}</a> : <></>}
+        <hr></hr>
+        <button className={"like_button"} onClick={likePost}><img src={likeicon} height={20}></img> {likes}</button>
+   
+      </div>
+
       <div>
         {/* only display delete on Post objects that belong to current user */}
-        {uid == auth.currentUser.uid ? <button className={"delete_button"} disabled={props.disable} onClick={deletePost}>{"delete"}</button> : <p></p>} 
+        {uid == auth.currentUser.uid ? <img src={settingsicon} height={25} width={25} onClick={handlePostSettings}></img> : <></>}
+        {checkDelete ? <button className={"delete_button"} disabled={props.disable} onClick={deletePost}>{"delete"}</button>: <></>}
       </div>
-      <p>{displayName}</p>
-      <img src={photoURL}/>
-      <p>{text}</p>
-      {fileURL ? fileType.startsWith("image") ? <img src={fileURL} height="250"></img> : <a href={fileURL} target="_blank">{fileName}</a> : <></>}
-      <button className={"like_button"} onClick={likePost}>{`likes: ${likes}`}</button>
-    </div>
+  </div>
   ) 
 }
+
+
 
 export default App;

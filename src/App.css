@@ -1,86 +1,306 @@
-body {
-  background-color: #282c34;
+/* custom scrollbar */
+::-webkit-scrollbar {
+  width: 18px;
 }
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(134, 134, 134, 0.9);
+  border-radius: 20px;
+  border: 5px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(134, 134, 134, 0.6);
+}
+
+/* end of custom scrollbar */
 
 
 
 #sign-in-page {
+  width: 100vw;
+  height: 100vh;
+  background-color: blanchedalmond;
+  overflow: hidden;
+}
 
+#sign-in-page, 
+#sign-in-page > button{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#sign-in-page > img{
+  padding: 10px;
+  border-radius: 50%;
+  background-color: white;
+  cursor: pointer;
 }
 
 #home-page {
+  display: flex;
+  flex-direction: row;
+  /* overflow: hidden */
+  overflow-y: hidden;
+}
 
+
+#SignOut {
+  display: flex;
+  justify-content: center;
+  
 }
 
 #sign-out-button {
-
+  margin-top: 10px;
+  width:100%
 }
 
 /* entire side bar */
-nav {
+#home-page > nav {
+  height: 100vh;
   width: 20%;
   background-color: maroon;
   color: white;
+  overflow-y: auto;
+  min-width: 200px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+}
+
+#home-page > nav > div {
+  /* background-color: blue; */
+  margin: 5px;
+  word-wrap: break-word;
+  height: 95%;
+  width: 95%;
+  
+  
+  
 }
 
 /* make this clickable to access signout */
 #nav-user {
   display: flex;
   flex-direction: row;
+  /* justify-content: center; */
+  align-items: center;
+  cursor: pointer;
+  margin-left: 10px;
 }
 
-#nav-user > img {
 
+#nav-user > img {
+  margin-right: 10px;
+  border-radius: 25px;
 }
 
 #nav-user > p {
-
+  font-size: medium
 }
 
 #nav-user > svg {
+  margin-left: -8px;
+  margin-top: 5px;
+}
 
+.user-click-on {
+  transform: scale(.2) rotate(180deg);
+}
+.user-click-off {
+  transform: scale(.2);
 }
 
 #nav-channels-header {
   display: flex;
   flex-direction: row;
+  /* justify-content: center; */
+  align-items: center;
+
+  border-top: 2px solid white;
+  margin-top: 5px;
 }
 
 
 #nav-channels-header > h2{
-
+  margin-right: 20px;
+  margin-left: 10px;
 }
 
 /* button to create new channel */
-#nav-channels-header > button {
-  
+/* button to delete current channel */
+
+#nav-channels-header > button:nth-child(2), #nav-channels-header > button:nth-child(3) {
+  background-color: transparent;
+  color: white;
+  border: transparent 2px;
+  border-radius: 10px;
+  font-size: xx-large;
+  width: 38px;
+  margin-top: 6px;
+  transition: 0.3s ease-in-out;
+  cursor: pointer;
+  text-align: center;
 }
 
+#nav-channels-header > button:nth-child(2):hover, #nav-channels-header > button:nth-child(3):hover {
+  background-color: rgba(158, 23, 23, 0.8);
+}
 
 #nav-channels-body{
   display: flex;
   flex-direction: column;
+  /* align-items: center; */
 }
 
 /* button(s) to change channels */
-.nav-channel-names { 
+.nav-channel-names {
+  width: 75%; 
+  margin: 5px;
 
+}
+
+.nav-channel-names > button{ 
+  background-color: transparent;
+  color: white;
+  border: none;
+  font-size: x-large;
+  cursor: pointer;
+
+}
+
+.nav-channel-names > button > div {
+  width: 0%;
+  border-bottom: 5px solid white;
+  border-radius: 5px;
+  transition: all 0.3s ease-out 0.05s;
+} 
+
+.nav-channel-names > button:hover > div{ 
+  width:100%;
 }
 
 #main-display {
-  background-color: red;
+  background-color: blanchedalmond;
+  width: 80%;
+  height: 100vh;
 }
 
 #user-input {
+  height: 20%;
+  position: relative;
+  
+}
+
+#user-input > form {
+
+}
+
+/* add message button */
+/* add media button */
+#user-input > form > button:nth-child(2),
+#user-input > form > button:nth-child(3)  {
+  width: 47.5%;
+  max-width: 450px;
+  height: 40px;
+}
+
+/* user media if not an img */
+#user-input > form > a {
+  
+}
+
+/* user media if an img */
+#user-input > form > img{
+  
+}
+
+/* User message div */
+#message {
+  display: flex;
+  flex-direction: row;
+}
+
+/* message */
+#message > input {
+  /* background-color: black; */
+  /* color: white; */
+  width: 95%;
+  outline: none;
+  border: none;
+  
+  
+}
+
+#message > div {
+  background-color: grey;
+  width: 50px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-top-right-radius: 10%;
+  border-bottom-right-radius: 10%;
+  padding: 5px;
+  
+  margin-left: 10px;
+}
+
+/* emoji button */
+#message > div > button {
+  min-height: 30px;
+  min-width: 30px;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  filter: invert(100%);
+}
+
+/* character counter */
+#message > div > p {
+  color: white;
+  height: 10%;
+  margin: 0%;
+  padding: 0%;
+}
+
+/* progress bar */
+#user-input > form > progress {
+
 
 }
 
 #channel-display {
-
+  height: 80%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column-reverse
+  
 }
+
+#channel-display > #temp-message {
+  background-color: white;
+  border-top-right-radius: 10px;
+}
+
 
 /* every post in channel display */
 .post {
+  /* background-color: green; */
+  margin-top: 5px;
+  min-width: 270px;
+  display: flex;
+  color: rgb(12, 8, 8);
 
 }
 
@@ -89,7 +309,109 @@ nav {
 
 }
 
+
+
 /* post made by someone else */
 .recieved {
 
+}
+
+.post > div:nth-child(2) {
+  width:90%;
+  margin-left: 10px;
+}
+/* delete post button */
+.post > div:nth-child(3) {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  width:8%;
+  visibility: hidden;
+
+  transition: all 0s ease-in 0.05s;
+}
+
+.posted:hover > div:nth-child(3) {
+  visibility: visible;
+}
+
+.posted > div:nth-child(3) > img {
+  
+}
+
+/* username of post */
+.post > div:nth-child(2) > p:nth-child(1) {
+  padding: 0px;
+  margin: 0px;
+  font-size: larger;
+  font-weight: 500
+}
+
+/* user profile of post */
+.post > img:nth-child(3) {
+
+}
+
+
+/* user uploaded media of post */
+.post > a {
+
+}
+
+/* like post button */
+.like_button {
+  border: none;
+  background-color: transparent;
+}
+
+/* load more button */
+#channel-display > #load-post {
+
+}
+
+/* groups */
+.post, 
+#channel-display > #temp-message, 
+#message {
+  width: 95%;
+  max-width: 900px;
+  word-wrap: break-word;
+}
+
+.post, 
+#channel-display > #temp-message,
+#message > input {
+  padding: 7px;
+}
+
+#temp-message > p, 
+.post > div:nth-child(2) > p:nth-child(2) {
+  word-wrap: break-word;
+  word-break: break-all;
+}
+
+
+
+@media only screen and (max-width: 850px) {
+  .post > div:nth-child(2) > img {
+    height: 150px;
+  }
+
+  #img {
+    height: 150px;
+  }
+
+  #home-page > div {
+    width: 100%;
+    height: 100vh;
+  }
+
+  #home-page > nav {
+    display: none;
+  }
+
+  /* .post > div:nth-child(2)  {
+    width: 80%;
+  }
+   */
 }
