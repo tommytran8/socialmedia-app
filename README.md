@@ -23,7 +23,7 @@
 
 ## LINK
 
-LINK HERE
+https://socialmedia-app-3.web.app/
 
 ## SAMPLE IMAGES
 
