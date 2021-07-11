@@ -1,6 +1,10 @@
 # socialmedia-app
 
  Create a social media web application with react/firebase. Trying to recreate a <b>slack clone</b>.
+ 
+## Description 
+ 
+React website using firebase as platform for development. The app is an attempt to recreate features of Slack, a social media app. Development familiarize myself with React. It also helped me learn about Firebase, how to upload/manipulate files on Firebase's storage, and how to update/manipulate user generated data on Firebase's Firestore, a cloud-hosted NoSQL database.
 
 ## FEATURES
         [x] 1. Upload Media immediately lets you choose file without using Choose File input.
