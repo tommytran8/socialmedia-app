@@ -122,17 +122,22 @@ const MainPage = () => {
 
   const addChannel = async ()=>{
     const channel = prompt("Please enter your channel name", "");
-    if (channel != "" && channel != null){
-      await channelsRef.add({ //adds new channel to channel collection on firestore database
-      // await channelsRef.doc(channel).set({ //adds new channel to channel collection on firestore database
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        createdBy: uid,
-        channelName: channel,
-        users: [uid]
-      })
-      await userDataRef.update({
-        numOfChannels: firebase.firestore.FieldValue.increment(1), 
-      })
+    if (channel.length <= 14) {
+      if (channel != "" && channel != null){
+        await channelsRef.add({ //adds new channel to channel collection on firestore database
+        // await channelsRef.doc(channel).set({ //adds new channel to channel collection on firestore database
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdBy: uid,
+          channelName: channel,
+          users: [uid]
+        })
+        await userDataRef.update({
+          numOfChannels: firebase.firestore.FieldValue.increment(1), 
+        })
+      }
+    }
+    else {
+      alert("Please keep channel name within 14 or less characters");
     }
   }
 
