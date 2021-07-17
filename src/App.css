@@ -165,7 +165,8 @@
 
 /* button(s) to change channels */
 .nav-channel-names {
-  width: 75%; 
+  /* width: 75%;  */
+  width: 100%; 
   margin: 5px;
 }
 
