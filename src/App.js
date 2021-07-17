@@ -1,4 +1,4 @@
-import React , {useState, useRef} from 'react';
+import React , {useState, useRef, useEffect} from 'react';
 import './App.css';
 
 import firebase from 'firebase/app';
@@ -84,6 +84,7 @@ const MainPage = () => {
 
   const { uid, photoURL } = auth.currentUser; //user's google uid and profile image
   const userdataRef = firestore.collection("userdata");
+  const [userList] = useCollectionData(userdataRef, {idField: 'id'});
 
   userdataRef.get().then((users)=>{ //updates userdata document if new user joins
     let check = false;
@@ -101,13 +102,11 @@ const MainPage = () => {
         numOfPost: 0,
         numOfChannels: 0,
         numOfFiles: 0,
-        userID: uid
+        userID: uid,
+        userName: auth.currentUser.displayName
       })
     }
   })
-
-
-  
   const channelsRef = firestore.collection("channels")
   const query = channelsRef.orderBy('createdAt', "desc");
   const [channels] = useCollectionData(query, {idField: 'id'});
@@ -180,6 +179,7 @@ const MainPage = () => {
   const handleUserClick = ()=>{
     setUserClick(!userClick);
   }
+
   return (
     <div id={"home-page"}>
       <nav>
@@ -190,7 +190,6 @@ const MainPage = () => {
             <svg id={"user-svg"} className={userClick ? "user-click-on" : "user-click-off"} width="43" height="30" viewBox="0 0 43 30" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M21.3652 29.2383L0.710938 8.4082L8.35742 0.761719L21.3652 13.7695L34.4609 0.761719L42.1074 8.4082L21.3652 29.2383Z" fill="white"/>
             </svg>
-
           </div>
         
           {userClick ? 
@@ -211,6 +210,16 @@ const MainPage = () => {
                             </div>
             })}
             </div>
+            <div id={"user-header"}>
+              <h2>{"Users Online: "}</h2>
+              {userList && userList.map((user)=>{return <div style={{
+                                                            display: user.userName == auth.currentUser.displayName ? "flex" : "none"
+                                                            }}>
+                                                          <p>{user.userName}</p> 
+                                                          <div></div>
+                                                        </div>})}
+            </div>
+            
           </>
           }
           
@@ -440,6 +449,10 @@ const Channel = (props) =>{
     }
   }
   
+  // useEffect(()=>{
+  //   document.title = posts ? `Num Post: ${posts.length}` : "Social Media";
+  // })
+
   return (
     <div id={"main-display"} onClick={()=>{if (emoji) setEmojiPicker(false); }}>
       {/* channel display */}

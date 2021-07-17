@@ -23,7 +23,7 @@ React website using firebase as platform for development. The app is an attempt 
         [ ] 12. Edit post message with setting icon
         [ ] 13. Search bar
         [ ] 14. Channel info
-        [ ] 15. User list (online/ offline)
+        [x] 15. User list (online/ offline)
 
 ## LINK
 

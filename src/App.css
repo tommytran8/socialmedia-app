@@ -189,6 +189,39 @@
   width:100%;
 }
 
+#user-header {
+  border-top: 2px solid white;
+  margin-top: 10px;
+}
+
+#user-header h2, #user-header div {
+  margin-right: 20px;
+  margin-left: 10px;
+}
+
+#user-header div {
+  display: flex;
+  /* justify-content: center; */
+  align-items: center;
+}
+
+#user-header div p {
+  margin: 0px;
+  padding: 0px;
+  /* width: 60%; */
+  /* text-align: center; */
+}
+
+#user-header div div {
+  margin-top: 2px;
+  border-radius: 50%;
+  width: 10px;
+  height: 10px;
+  margin-left: 10px;
+  background-color: green;
+}
+
+
 #main-display {
   background-color: blanchedalmond;
   width: 80%;
@@ -389,8 +422,6 @@
   word-break: break-all;
 }
 
-
-
 @media only screen and (max-width: 850px) {
   .post > div:nth-child(2) > img {
     height: 150px;
@@ -413,4 +444,5 @@
     width: 80%;
   }
    */
+   
 }
