@@ -195,25 +195,25 @@
   margin-top: 10px;
 }
 
-#user-header h2, #user-header div {
+#user-header h2, #user-header > div {
   margin-right: 20px;
   margin-left: 10px;
 }
 
-#user-header div {
-  display: flex;
+#user-header > div {
+  display: none;
   /* justify-content: center; */
   align-items: center;
 }
 
-#user-header div p {
+#user-header > div p {
   margin: 0px;
   padding: 0px;
   /* width: 60%; */
   /* text-align: center; */
 }
 
-#user-header div div {
+#user-header > div div {
   margin-top: 2px;
   border-radius: 50%;
   width: 10px;

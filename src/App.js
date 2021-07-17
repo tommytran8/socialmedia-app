@@ -44,6 +44,7 @@ const auth = firebase.auth();
 const firestore= firebase.firestore();
 const storage = firebase.storage();
 
+
 const Filter = require('bad-words');
 
 const App = () => {
@@ -103,10 +104,11 @@ const MainPage = () => {
         numOfChannels: 0,
         numOfFiles: 0,
         userID: uid,
-        userName: auth.currentUser.displayName
+        userName: auth.currentUser.displayName,
       })
     }
   })
+
   const channelsRef = firestore.collection("channels")
   const query = channelsRef.orderBy('createdAt', "desc");
   const [channels] = useCollectionData(query, {idField: 'id'});
@@ -210,15 +212,15 @@ const MainPage = () => {
                             </div>
             })}
             </div>
-            <div id={"user-header"}>
+            {/* <div id={"user-header"}>
               <h2>{"Users Online: "}</h2>
-              {userList && userList.map((user)=>{return <div style={{
-                                                            display: user.userName == auth.currentUser.displayName ? "flex" : "none"
-                                                            }}>
+              {userList && userList.map((user)=>{return <div style={user.userName == auth.currentUser.displayName ? {
+                                                            display: "flex"
+                                                            }: {}}>
                                                           <p>{user.userName}</p> 
                                                           <div></div>
                                                         </div>})}
-            </div>
+            </div> */}
             
           </>
           }
