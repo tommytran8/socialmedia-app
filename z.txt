@@ -1,0 +1,6 @@
+add user list feature
+
+
+- use firebase realtime database to detect connection
+- add UI of user list
+- shows users online

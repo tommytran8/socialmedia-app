@@ -5,6 +5,7 @@ import firebase from 'firebase/app';
 import 'firebase/firestore';
 import 'firebase/auth';
 import 'firebase/storage';
+import 'firebase/database';
 
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
@@ -43,6 +44,7 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const firestore= firebase.firestore();
 const storage = firebase.storage();
+const database = firebase.database();
 
 
 const Filter = require('bad-words');
@@ -85,7 +87,43 @@ const MainPage = () => {
 
   const { uid, photoURL } = auth.currentUser; //user's google uid and profile image
   const userdataRef = firestore.collection("userdata");
-  const [userList] = useCollectionData(userdataRef, {idField: 'id'});
+
+
+  // WORK HERE 07/19/21
+  const connectedRef = database.ref(".info/connected");
+  connectedRef.on("value", (snap) => {
+    if (snap.val() === true) {
+      console.log("connected");
+    } else {
+      console.log("not connected");
+    }
+  });
+
+  const userConnectionRef = database.ref(`users/${uid}`);
+  userConnectionRef.get()
+  .then((data)=>{
+    if(data.exists()){
+      console.log(data.val());
+    }
+    else {
+      console.log("need to create data here");
+      // userConnectionRef.set({
+      //   username: auth.currentUser.displayName,
+      //   online: true
+      // })
+    }
+
+  }).catch(error => {
+    console.log(`There is an error: ${error}`);
+  })
+
+  // userConnectionRef.onDisconnect().remove();
+
+  // userConnectionRef.onDisconnect().set({
+  //   online: false
+  // })
+
+  // const [userList] = useCollectionData(userdataRef, {idField: 'id'});
 
   userdataRef.get().then((users)=>{ //updates userdata document if new user joins
     let check = false;
