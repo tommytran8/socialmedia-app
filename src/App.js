@@ -1,16 +1,20 @@
 import React , {useState, useRef, useEffect} from 'react';
 import './App.css';
 
+// firebase
 import firebase from 'firebase/app';
 import 'firebase/firestore';
 import 'firebase/auth';
 import 'firebase/storage';
 import 'firebase/database';
 
+// react firebase hooks
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { useStorage } from 'react-firebase-hooks/storage';
 
+
+// assets
 import googlelogo from './assets/google.png';
 import settingsicon from './assets/settings.png';
 import likeicon from './assets/like.png'
@@ -18,6 +22,13 @@ import smileicon from './assets/smile.png'
 
 import 'emoji-mart/css/emoji-mart.css';
 import { Picker } from 'emoji-mart';
+
+
+// components
+// import SignIn from './components/SignIn';
+
+// functions
+// const test = require('./functions/test');
 
 
 
@@ -493,6 +504,17 @@ const Channel = (props) =>{
   //   document.title = posts ? `Num Post: ${posts.length}` : "Social Media";
   // })
 
+  const resetFile = ()=>{
+    setFile(null);
+    setFileURL(null);
+    setFileName(null);
+    setFileType(null);
+    document.getElementById("img").src = "";  
+    document.getElementById("img").height = 0; 
+    document.getElementById("link").href = ""; 
+    document.getElementById("link").innerText = '';
+  }
+
   return (
     <div id={"main-display"} onClick={()=>{if (emoji) setEmojiPicker(false); }}>
       {/* channel display */}
@@ -502,15 +524,7 @@ const Channel = (props) =>{
           <p>{formValue}</p>
           <a id="link" target="_blank"></a>
           <img id="img" height="0" src=""></img>  
-          {fileT ? <button onClick={()=>{
-            setFile(null);
-            setFileURL(null);
-            setFileName(null);
-            setFileType(null);
-            document.getElementById("img").src = "";  
-            document.getElementById("img").height = 0; 
-            document.getElementById("link").href = ""; 
-            document.getElementById("link").innerText = ''}}>x</button> : <></>}
+          {fileT ? <button onClick={resetFile}>x</button> : <></>}
         </div>
         : <></>}
         {posts && posts.map(post => <Post key={post.id} post={post} channel={props.channelID} disable={fileButton} />)}
