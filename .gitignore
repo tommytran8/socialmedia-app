@@ -13,6 +13,7 @@
 
 # misc
 /src/env.json
+/HOWTO.md
 .DS_Store
 .env.local
 .env.development.local
