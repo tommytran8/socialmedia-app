@@ -1,16 +1,14 @@
-const SignIn = ()=>{
-    const signInWithGoogle = () => {
-      const provider = new firebase.auth.GoogleAuthProvider(); //google auth popup
-      auth.signInWithRedirect(provider);
-    }
-    return (
-      <div id={"sign-in-page"}>
-        <h2>My Social Media App: <u>a slack clone</u></h2>
-        
-        <h4>Sign in with Google</h4>
-        <img src={googlelogo} alt={"Google"} width={30} height={30} onClick={signInWithGoogle}/>
-        {/* <button onClick={signInWithGoogle}><img src={googlelogo} alt={"Google"} width={40} height={40}/></button> */}
-      </div>
-    )
+import SignInDisplay from "./signin_components/SignInDisplay"
+import SignInOptions from "./signin_components/SignInOptions";
+
+const SignIn = ({firebase, auth})=>{
+
+  return (
+    <div id={"sign-in-page"}>
+      <SignInDisplay/>
+      <SignInOptions firebase={firebase} auth={auth}/>
+    </div>
+  )
 }
+
 export default SignIn;
