@@ -2,6 +2,7 @@ import './App.css';
 
 // firebase
 import firebase from 'firebase/app';
+// import { getAnalytics } from "firebase/analytics";
 import 'firebase/firestore';
 import 'firebase/auth';
 import 'firebase/storage';
@@ -24,7 +25,7 @@ const {
   measurementId
 } = require("./env.json");
 
-firebase.initializeApp({
+const app = firebase.initializeApp({
   apiKey: apiKey,
   authDomain: authDomain,
   projectId: projectId,
@@ -33,6 +34,8 @@ firebase.initializeApp({
   appId: appId,
   measurementId: measurementId
 });
+
+const analytics = firebase.getAnalytics(app);
 
 const auth = firebase.auth();
 const firestore= firebase.firestore();
