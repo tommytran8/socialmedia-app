@@ -25,7 +25,7 @@ const {
   measurementId
 } = require("./env.json");
 
-const app = firebase.initializeApp({
+firebase.initializeApp({
   apiKey: apiKey,
   authDomain: authDomain,
   projectId: projectId,
@@ -35,7 +35,7 @@ const app = firebase.initializeApp({
   measurementId: measurementId
 });
 
-const analytics = firebase.getAnalytics(app);
+// const analytics = getAnalytics(app);
 
 const auth = firebase.auth();
 const firestore= firebase.firestore();
